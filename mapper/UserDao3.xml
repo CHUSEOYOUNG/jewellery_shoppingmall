@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace = "com.sist.web.dao.UserDao3">
+	<resultMap type = "com.sist.web.model.User3" id = "userResultMap3">
+		<id column = "USER_ID" property = "userId" />
+		<result column = "USER_PWD" property = "userPwd" />
+		<result column = "USER_NAME" property = "userName" />
+		<result column = "USER_EMAIL" property = "userEmail" />
+		<result column = "STATUS" property = "status" />
+		<result column = "REG_DATE" property = "regDate" />
+	</resultMap>
+	<select id = "userSelect" parameterType = "String" resultMap = "userResultMap3">
+		SELECT
+			    USER_ID,
+			    NVL(USER_PWD, '') USER_PWD,
+			    NVL(USER_NAME, '') USER_NAME,
+			    NVL(USER_EMAIL, '') USER_EMAIL, 
+			    NVL(STATUS, 'N') STATUS,
+			    NVL(TO_CHAR(REG_DATE, 'YYYY.MM.DD HH24:MI:SS'), '') REG_DATE
+			FROM TBL_USER
+			WHERE USER_ID = #{value}
+	</select>
+	
+	<insert id = "userInsert" parameterType = "com.sist.web.model.User3">
+			INSERT INTO TBL_USER (
+		    USER_ID,
+		    USER_PWD,
+		    USER_NAME,
+		    USER_EMAIL,
+		    STATUS,
+		    REG_DATE
+		) VALUES (#{userId}, #{userPwd}, #{userName}, #{userEmail}, #{status}, SYSDATE)
+	
+	
+	</insert>
+	 
+	<update id="userUpdate" parameterType = "com.sist.web.model.User3">
+			UPDATE TBL_USER
+		    SET USER_PWD = #{userPwd},
+		        USER_NAME = #{userName},
+		        USER_EMAIL = #{userEmail}
+			WHERE USER_ID = #{userId}
+	
+	</update>
+	
+	
+	<update id="userDelete" parameterType = "com.sist.web.model.User3">
+			UPDATE TBL_USER
+		    SET STATUS = 'N'
+			WHERE USER_ID = #{userId}
+	</update>
+	
+	
+	
+
+</mapper>

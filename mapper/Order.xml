@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.sist.web.dao.OrderDao">
+
+    <!-- OrderInfo 매핑 -->
+    <resultMap id="orderInfoResultMap" type="com.sist.web.model.OrderInfo">
+        <id property="orderId" column="ORDER_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="totalPrice" column="TOTAL_PRICE"/>
+        <result property="paymentMethod" column="PAYMENT_METHOD"/>
+        <result property="orderDate" column="ORDER_DATE"/>
+    </resultMap>
+
+    <!-- OrderInfoDetail 매핑 -->
+    <resultMap id="orderDetailResultMap" type="com.sist.web.model.OrderInfoDetail">
+        <id property="orderDetailId" column="ORDER_DETAIL_ID"/>
+        <result property="orderId" column="ORDER_ID"/>
+        <result property="productId" column="PRODUCT_ID"/>
+        <result property="productName" column="PRODUCT_NAME"/>
+        <result property="productPrice" column="PRODUCT_PRICE"/>
+        <result property="quantity" column="QUANTITY"/>
+        <result property="totalPrice" column="TOTAL_PRICE"/>
+        <result property="productImage" column="PRODUCT_IMAGE"/>
+        
+    </resultMap>
+
+    <!-- 주문 정보 저장 -->
+    <insert id="insertOrderInfo" parameterType="com.sist.web.model.OrderInfo">
+        INSERT INTO ORDER_INFO (
+            ORDER_ID,
+            USER_ID,
+            TOTAL_PRICE,
+            PAYMENT_METHOD,
+            ORDER_DATE
+        ) VALUES (
+            #{orderId},
+            #{userId},
+            #{totalPrice},
+            #{paymentMethod},
+            SYSDATE
+        )
+    </insert>
+
+    <!-- 주문 상세 저장 -->
+    <insert id="insertOrderDetail" parameterType="com.sist.web.model.OrderInfoDetail">
+        <selectKey keyProperty="orderDetailId" resultType="long" order="BEFORE">
+            SELECT ORDER_DETAIL_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO ORDER_DETAIL (
+            ORDER_DETAIL_ID,
+            ORDER_ID,
+            PRODUCT_ID,
+            PRODUCT_NAME,
+            PRODUCT_PRICE,
+            QUANTITY,
+            TOTAL_PRICE
+        ) VALUES (
+            #{orderDetailId},
+            #{orderId},
+            #{productId},
+            #{productName},
+            #{productPrice},
+            #{quantity},
+            #{totalPrice}
+        )
+    </insert>
+ <select id="selectOrderList" parameterType="string" resultMap="orderInfoResultMap">
+        SELECT 
+            ORDER_ID,
+            USER_ID,
+            TOTAL_PRICE,
+            PAYMENT_METHOD,
+            TO_CHAR(ORDER_DATE, 'YYYY.MM.DD') AS ORDER_DATE
+        FROM ORDER_INFO
+        WHERE USER_ID = #{userId}
+        ORDER BY ORDER_DATE DESC
+    </select>
+
+    <!-- 주문 상세 목록 조회 -->
+    <select id="selectOrderDetails" parameterType="string" resultMap="orderDetailResultMap">
+        SELECT 
+            OD.ORDER_DETAIL_ID,
+            OD.ORDER_ID,
+            OD.PRODUCT_ID,
+            OD.PRODUCT_NAME,
+            OD.PRODUCT_PRICE,
+            OD.QUANTITY,
+            OD.TOTAL_PRICE,
+            PI.PRODUCT_IMAGE
+        FROM ORDER_DETAIL OD, PRODUCT_INFORM PI 
+        WHERE OD.PRODUCT_ID = PI.PRODUCT_ID 
+        AND OD.ORDER_ID = #{orderId}
+    </select>
+
+</mapper>

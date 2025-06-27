@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sist.web.dao.ProductFileDao">
+
+    <resultMap type="com.sist.web.model.ProductFile" id="productFileResultMap">
+        <id column="PRODUCT_FILE_ID" property="productFileId"/>
+        <result column="PRODUCT_ID" property="productId"/>
+        <result column="PRODUCT_FILE_TYPE" property="productFileType"/>
+        <result column="PRODUCT_FILE_NAME" property="productFileName"/>
+        <result column="PRODUCT_FILE_PATH" property="productFilePath"/>
+        <result column="PRODUCT_REG_DATE" property="productRegDate"/>
+    </resultMap>
+
+    <select id="selectProductFileList" parameterType="string" resultMap="productFileResultMap">
+        SELECT PRODUCT_FILE_ID, PRODUCT_ID, PRODUCT_FILE_TYPE,
+               PRODUCT_FILE_NAME, PRODUCT_FILE_PATH, PRODUCT_REG_DATE
+        FROM PRODUCT_FILE
+        WHERE PRODUCT_ID = #{productId}
+        ORDER BY PRODUCT_FILE_ID
+    </select>
+
+    <insert id="insertProductFile" parameterType="com.sist.web.model.ProductFile">
+        INSERT INTO PRODUCT_FILE (
+            PRODUCT_FILE_ID, PRODUCT_ID, PRODUCT_FILE_TYPE,
+            PRODUCT_FILE_NAME, PRODUCT_FILE_PATH, PRODUCT_REG_DATE
+        ) VALUES (
+            PRODUCT_FILE_SEQ.NEXTVAL, #{productId}, #{productFileType},
+            #{productFileName}, #{productFilePath}, SYSDATE
+        )
+    </insert>
+
+<!-- ProductFile.xml -->
+<insert id="insertProductFileList" parameterType="list">
+    INSERT INTO PRODUCT_FILE
+    (
+        PRODUCT_FILE_ID,
+        PRODUCT_ID,
+        PRODUCT_FILE_TYPE,
+        PRODUCT_FILE_NAME,
+        PRODUCT_FILE_PATH,
+        PRODUCT_REG_DATE
+    )
+    VALUES
+    (
+        PRODUCT_FILE_SEQ.NEXTVAL,
+        #{productId},
+        #{productFileType},
+        #{productFileName},
+        #{productFilePath},
+        SYSDATE
+    )
+</insert>
+
+
+    <delete id="deleteProductFileByProductId" parameterType="string">
+        DELETE FROM PRODUCT_FILE WHERE PRODUCT_ID = #{productId}
+    </delete>
+
+</mapper>

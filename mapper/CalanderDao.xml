@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sist.web.dao.CalanderDao">
+
+<resultMap id="calanderListResultMap" type="com.sist.web.model.CalanderList">
+        <id property="calanderListId" column="CALANDER_LIST_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="calanderListName" column="CALANDER_LIST_NAME"/>
+        <result property="calanderListStartDate" column="CALANDER_LIST_STARTDATE"/>
+        <result property="calanderListEndDate" column="CALANDER_LIST_ENDDATE"/>
+    </resultMap>
+
+    <!-- 일정 상세 매핑 -->
+<resultMap id="calanderResultMap" type="com.sist.web.model.Calander">
+    <id property="calanderId" column="CALANDER_ID"/>
+    <result property="calanderListId" column="CALANDER_LIST_ID"/>
+    <result property="spotId" column="SPOT_ID"/>
+    <result property="calanderStartTime" column="START_TIME"/>
+    <result property="calanderEndTime" column="END_TIME"/>
+    <result property="locationName" column="LOCATION_NAME" />
+    <result column="LAT" property="lat"/>
+<result column="LON" property="lon"/>
+</resultMap>
+
+ <insert id="insertCalanderList" parameterType="com.sist.web.model.CalanderList">
+        INSERT INTO T_CALANDER_LIST (
+            CALANDER_LIST_ID, USER_ID, CALANDER_LIST_NAME, CALANDER_LIST_STARTDATE, CALANDER_LIST_ENDDATE
+        ) VALUES (
+            #{calanderListId}, #{userId}, #{calanderListName}, #{calanderListStartDate}, #{calanderListEndDate}
+        )
+    </insert>
+
+    <!-- 일정 상세 저장 -->
+<insert id="insertCalander" parameterType="com.sist.web.model.Calander">
+    INSERT INTO T_CALANDER (
+        CALANDER_ID,
+        CALANDER_LIST_ID,
+        SPOT_ID,
+        CALANDER_START_TIME,
+        CALANDER_END_TIME
+    ) VALUES (
+        #{calanderId, jdbcType=VARCHAR},
+        #{calanderListId, jdbcType=VARCHAR},
+        #{spotId, jdbcType=INTEGER},
+        TO_DATE(#{calanderStartTime, jdbcType=VARCHAR}, 'YYYY-MM-DD HH24:MI:SS'),
+        TO_DATE(#{calanderEndTime, jdbcType=VARCHAR}, 'YYYY-MM-DD HH24:MI:SS')
+    )
+</insert>
+
+
+<select id="getCalanderWithUnifiedSpotName" parameterType="String" resultMap="calanderResultMap">
+  SELECT 
+    C.CALANDER_ID,
+    C.CALANDER_LIST_ID,
+    C.SPOT_ID,
+    TO_CHAR(C.CALANDER_START_TIME, 'YYYY-MM-DD HH24:MI:SS') AS START_TIME,
+    TO_CHAR(C.CALANDER_END_TIME, 'YYYY-MM-DD HH24:MI:SS') AS END_TIME,
+    V.LOCATION_NAME,
+    V.LAT,
+    V.LON
+  FROM 
+    T_CALANDER C
+  JOIN (
+    SELECT 
+      TO_CHAR(LOCATION_ID) AS LOCATION_ID,
+      LOCATION_NAME,
+      LATITUDE AS LAT,
+      LONGITUDE AS LON
+    FROM LOCATION_MARKER
+    UNION ALL
+    SELECT 
+      TO_CHAR(ACCOMM_ID) AS LOCATION_ID,
+      ACCOMM_NAME AS LOCATION_NAME,
+      ACCOMM_LAT AS LAT,
+      ACCOMM_LON AS LON
+    FROM T_ACCOMM
+  ) V ON TO_CHAR(C.SPOT_ID) = V.LOCATION_ID
+  WHERE 
+    C.CALANDER_LIST_ID = #{listId, jdbcType=VARCHAR}
+  ORDER BY 
+    C.CALANDER_START_TIME
+</select>
+
+
+
+</mapper>

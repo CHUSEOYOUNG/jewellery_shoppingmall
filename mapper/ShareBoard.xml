@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sist.web.dao.ShareBoardDao">
+
+    <resultMap id="shareBoardResultMap" type="com.sist.web.model.ShareBoard">
+        <id property="postId" column="POST_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="title" column="TITLE"/>
+        <result property="content" column="CONTENT"/>
+        <result property="readCnt" column="READ_CNT"/>
+        <result property="regDate" column="REG_DATE"/>
+        <!-- <collection ...> 제거됨 -->
+    </resultMap>
+<resultMap id="shareCommentResultMap" type="com.sist.web.model.ShareComment">
+    <id property="commentId" column="COMMENT_ID"/>
+    <result property="postId" column="POST_ID"/>
+    <result property="userId" column="USER_ID"/>
+    <result property="orderNo" column="ORDER_NO"/>
+    <result property="indent" column="INDENT"/>
+    <result property="content" column="CONTENT"/>
+    <result property="parentId" column="PARENT_ID"/>
+    <result property="regDate" column="REG_DATE"/>
+</resultMap>
+
+    <select id="boardList" parameterType="com.sist.web.model.ShareBoard" resultMap="shareBoardResultMap">
+        SELECT * FROM (
+            SELECT ROWNUM RNUM, A.* FROM (
+                SELECT POST_ID, USER_ID, TITLE, CONTENT, READ_CNT, TO_CHAR(REG_DATE,'YYYY.MM.DD HH24:MI:SS') REG_DATE
+                FROM SHARE_BOARD
+                <where>
+                    <if test="searchType != null and searchValue != null and searchValue != ''">
+                        <choose>
+                            <when test="searchType == '1'">AND USER_ID LIKE '%' || #{searchValue} || '%'</when>
+                            <when test="searchType == '2'">AND TITLE LIKE '%' || #{searchValue} || '%'</when>
+                            <when test="searchType == '3'">AND DBMS_LOB.INSTR(CONTENT, #{searchValue}) &gt; 0</when>
+                        </choose>
+                    </if>
+                </where>
+                ORDER BY POST_ID DESC
+            ) A
+        )
+        WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <select id="boardListCount" parameterType="com.sist.web.model.ShareBoard" resultType="long">
+        SELECT COUNT(*) FROM SHARE_BOARD
+        <where>
+            <if test="searchType != null and searchValue != null and searchValue != ''">
+                <choose>
+                    <when test="searchType == '1'">AND USER_ID LIKE '%' || #{searchValue} || '%'</when>
+                    <when test="searchType == '2'">AND TITLE LIKE '%' || #{searchValue} || '%'</when>
+                    <when test="searchType == '3'">AND DBMS_LOB.INSTR(CONTENT, #{searchValue}) &gt; 0</when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <update id="boardReadCntPlus" parameterType="long">
+        UPDATE SHARE_BOARD SET READ_CNT = READ_CNT + 1 WHERE POST_ID = #{value}
+    </update>
+
+    <select id="boardSelect" parameterType="long" resultMap="shareBoardResultMap">
+        SELECT POST_ID, USER_ID, TITLE, CONTENT, READ_CNT, TO_CHAR(REG_DATE,'YYYY.MM.DD HH24:MI:SS') REG_DATE
+        FROM SHARE_BOARD
+        WHERE POST_ID = #{value}
+    </select>
+
+    <insert id="insertBoard" parameterType="com.sist.web.model.ShareBoard">
+        <selectKey resultType="long" keyProperty="postId" order="BEFORE">
+            SELECT SEQ_SHARE_BOARD.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SHARE_BOARD (POST_ID, USER_ID, TITLE, CONTENT, READ_CNT, REG_DATE)
+        VALUES (#{postId}, #{userId}, #{title}, #{content}, 0, SYSDATE)
+    </insert>
+
+    <update id="updateBoard" parameterType="com.sist.web.model.ShareBoard">
+        UPDATE SHARE_BOARD
+        SET TITLE = #{title}, CONTENT = #{content}
+        WHERE POST_ID = #{postId}
+    </update>
+
+    <delete id="boardDelete" parameterType="long">
+        DELETE FROM SHARE_BOARD WHERE POST_ID = #{value}
+    </delete>
+<select id="commentList" parameterType="long" resultType="com.sist.web.model.ShareComment">
+  SELECT COMMENT_ID, POST_ID, USER_ID, ORDER_NO, INDENT, CONTENT, PARENT_ID,
+         TO_CHAR(REG_DATE, 'YYYY.MM.DD HH24:MI:SS') AS REG_DATE
+  FROM SHARE_COMMENT
+  WHERE POST_ID = #{postId}
+  ORDER BY ORDER_NO ASC
+</select>
+</mapper>

@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace = "com.sist.web.dao.HiBoardDao2">
+	<!-- 게시판 리스트 resultMap-->
+<resultMap type="com.sist.web.model.HiBoard2" id="hiBoardResultMap">
+    <id column = "HIBBS_SEQ" property = "hibbsSeq" />
+    <result column = "USER_ID" property = "userId" />
+    <result column = "USER_NAME" property = "userName" />
+    <result column = "USER_EMAIL" property = "userEmail" />
+    <result column = "HIBBS_GROUP" property = "hibbsGroup" />
+    <result column = "HIBBS_ORDER" property = "hibbsOrder" />
+    <result column = "HIBBS_INDENT" property = "hibbsIndent" />
+    <result column = "HIBBS_TITLE" property = "hibbsTitle" />
+    <result column = "HIBBS_CONTENT" property = "hibbsContent" />
+    <result column = "HIBBS_READ_CNT" property = "hibbsReadCnt" />
+    <result column = "REG_DATE" property = "regDate" />
+    <result column = "HIBBS_PARENT" property = "hibbsParent" />
+    <result column = "FILE_NAME" property = "fileName" />
+    <result column = "FILE_ORG_NAME" property = "fileOrgName" />
+    <result column = "FILE_EXT" property = "fileExt" />
+    <result column = "FILE_SIZE" property = "fileSize" />
+</resultMap>
+<resultMap type="com.sist.web.model.HiBoardFile2" id="hiBoardFileResultMap">
+		<id column = "HIBBS_SEQ" property = "hibbsSeq" />
+		<result column = "FILE_SEQ" property = "fileSeq" />
+		<result column = "FILE_ORG_NAME" property = "fileOrgName" />
+		<result column = "FILE_NAME" property = "fileName" />
+		<result column = "FILE_EXT" property = "fileExt" />
+		<result column = "FILE_SIZE" property = "fileSize" />
+		<result column = "REG_DATE" property = "regDate" />
+	</resultMap>
+	<!-- 게시판 리스트 댓글빼고 -->
+<select id="boardList" parameterType="com.sist.web.model.HiBoard2" resultMap="hiBoardResultMap">
+SELECT HIBBS_SEQ,
+       USER_ID,
+       USER_NAME,
+       USER_EMAIL,
+       HIBBS_GROUP,
+       HIBBS_ORDER,
+       HIBBS_INDENT,
+       HIBBS_TITLE,
+       HIBBS_CONTENT,
+       HIBBS_READ_CNT,
+       REG_DATE,
+       HIBBS_PARENT,
+       FILE_NAME,
+       FILE_ORG_NAME,
+       FILE_EXT,
+       FILE_SIZE
+FROM (
+    SELECT ROWNUM RNUM,
+           HIBBS_SEQ,
+           USER_ID,
+           USER_NAME,
+           USER_EMAIL,
+           HIBBS_GROUP,
+           HIBBS_ORDER,
+           HIBBS_INDENT,
+           HIBBS_TITLE,
+           HIBBS_CONTENT,
+           HIBBS_READ_CNT,
+           REG_DATE,
+           HIBBS_PARENT,
+           FILE_NAME,
+           FILE_ORG_NAME,
+           FILE_EXT,
+           FILE_SIZE
+    FROM (
+        SELECT A.HIBBS_SEQ,
+               A.USER_ID,
+               NVL(B.USER_NAME, '') USER_NAME,
+               NVL(B.USER_EMAIL, '') USER_EMAIL,
+               NVL(A.HIBBS_GROUP, 0) HIBBS_GROUP,
+               NVL(A.HIBBS_ORDER, 0) HIBBS_ORDER,
+               NVL(A.HIBBS_INDENT, 0) HIBBS_INDENT,
+               NVL(A.HIBBS_TITLE, '') HIBBS_TITLE,
+               NVL(A.HIBBS_CONTENT, '') HIBBS_CONTENT,
+               NVL(A.HIBBS_READ_CNT, 0) HIBBS_READ_CNT,
+               TO_CHAR(A.REG_DATE, 'YYYY.MM.DD HH24:MI:SS') REG_DATE,
+               NVL(A.HIBBS_PARENT, 0) HIBBS_PARENT,
+               NVL(F.FILE_NAME, '') FILE_NAME,
+               NVL(F.FILE_ORG_NAME, '') FILE_ORG_NAME,
+               NVL(F.FILE_EXT, '') FILE_EXT,
+               NVL(F.FILE_SIZE, 0) FILE_SIZE
+        FROM TBL_HIBOARD A, TBL_USER B, TBL_HIBOARD_FILE F
+        WHERE A.USER_ID = B.USER_ID
+        AND A.HIBBS_SEQ = F.HIBBS_SEQ
+        AND A.HIBBS_PARENT = 0
+          <if test='searchType != null and searchType != "" and searchValue != null and searchValue != ""'>
+            <choose>
+              <when test='searchType == "1"'>
+                AND B.USER_NAME LIKE '%' || #{searchValue} || '%'
+              </when>
+              <when test='searchType == "2"'>
+                AND A.HIBBS_TITLE LIKE '%' || #{searchValue} || '%'
+              </when>
+              <when test='searchType == "3"'>
+                AND DBMS_LOB.INSTR(A.HIBBS_CONTENT, #{searchValue}) > 0
+              </when>
+            </choose>
+          </if>
+        ORDER BY A.HIBBS_GROUP DESC, A.HIBBS_ORDER ASC
+    )
+)
+WHERE RNUM <![CDATA[>=]]> #{startRow}
+  AND RNUM <![CDATA[<=]]> #{endRow}
+</select>
+
+
+	
+	<!-- 총게시물수 -->
+	<select id="boardListCount" parameterType = "com.sist.web.model.HiBoard2" resultType = "long">
+		SELECT COUNT(A.HIBBS_SEQ) CNT
+			FROM TBL_HIBOARD A, TBL_USER B
+			WHERE A.USER_ID = B.USER_ID
+			
+			<if test= 'searchType != null and searchType != "" and searchValue != null and searchValue != ""'>
+				<choose>
+				
+					<when test='searchType == "1"'>
+					AND B.USER_NAME LIKE '%' || #{searchValue} || '%'
+					</when>
+					
+					<when test='searchType == "2"'>
+					AND A.HIBBS_TITLE LIKE '%' || #{searchValue} || '%'
+					</when>
+					
+					<when test='searchType == "3"'>
+					AND DBMS_LOB.INSTR(A.HIBBS_CONTENT, #{searchValue}) > 0
+					</when>
+					
+				</choose>
+			</if>
+	</select>
+	
+<select id="commentListByGroup" parameterType="long" resultMap="hiBoardResultMap">
+    SELECT 
+        A.HIBBS_SEQ,
+        A.USER_ID,
+        NVL(B.USER_NAME, '') AS USER_NAME,
+        NVL(B.USER_EMAIL, '') AS USER_EMAIL,
+        NVL(A.HIBBS_GROUP, 0) AS HIBBS_GROUP,
+        NVL(A.HIBBS_ORDER, 0) AS HIBBS_ORDER,
+        NVL(A.HIBBS_INDENT, 0) AS HIBBS_INDENT,
+        NVL(A.HIBBS_TITLE, '') AS HIBBS_TITLE,
+        NVL(A.HIBBS_CONTENT, '') AS HIBBS_CONTENT,
+        NVL(A.HIBBS_READ_CNT, 0) AS HIBBS_READ_CNT,
+        TO_CHAR(A.REG_DATE, 'YYYY.MM.DD HH24:MI:SS') AS REG_DATE,
+        NVL(A.HIBBS_PARENT, 0) AS HIBBS_PARENT
+    FROM TBL_HIBOARD A, TBL_USER B
+    WHERE  A.USER_ID = B.USER_ID
+	    AND A.HIBBS_GROUP = #{hibbsGroup}
+	    AND A.HIBBS_PARENT != 0
+	    ORDER BY A.HIBBS_ORDER ASC
+</select>
+
+	
+	<select id="boardSelect" parameterType="long" resultMap="hiBoardResultMap">
+    SELECT
+        A.HIBBS_SEQ,
+        A.USER_ID,
+        NVL(B.USER_NAME, '') AS USER_NAME,
+        NVL(B.USER_EMAIL, '') AS USER_EMAIL,
+        NVL(A.HIBBS_GROUP, 0) AS HIBBS_GROUP,
+        NVL(A.HIBBS_ORDER, 0) AS HIBBS_ORDER,
+        NVL(A.HIBBS_INDENT, 0) AS HIBBS_INDENT,
+        NVL(A.HIBBS_TITLE, '') AS HIBBS_TITLE,
+        NVL(A.HIBBS_CONTENT, '') AS HIBBS_CONTENT,
+        NVL(A.HIBBS_READ_CNT, 0) AS HIBBS_READ_CNT,
+        TO_CHAR(A.REG_DATE, 'YYYY.MM.DD HH24:MI:SS') AS REG_DATE,
+        NVL(A.HIBBS_PARENT, 0) AS HIBBS_PARENT
+    FROM TBL_HIBOARD A, TBL_USER B 
+    WHERE A.USER_ID = B.USER_ID
+    AND A.HIBBS_SEQ = #{hibbsSeq}
+</select>
+
+
+	<!-- 게시글 조회수 증가 -->
+	<update id="boardReadCntPlus" parameterType = "long">
+		UPDATE TBL_HIBOARD 
+		SET HIBBS_READ_CNT = HIBBS_READ_CNT + 1
+		WHERE HIBBS_SEQ = #{value}
+	</update>
+	
+	<!-- 게시글 등록 -->
+	<insert id="boardInsert" parameterType = "com.sist.web.model.HiBoard2">
+		<!-- 선행 처리기(시퀀스 조회) -->
+		<selectKey resultType = "long" keyProperty = "hibbsSeq" order = "BEFORE">
+			SELECT SEQ_HIBOARD_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO TBL_HIBOARD 
+		(HIBBS_SEQ,
+		    USER_ID,
+		    HIBBS_GROUP,
+		    HIBBS_ORDER,
+		    HIBBS_INDENT,
+		    HIBBS_TITLE,
+		    HIBBS_CONTENT,
+		    HIBBS_READ_CNT,
+		    REG_DATE,
+		    HIBBS_PARENT
+			) VALUES ( #{hibbsSeq},
+			           #{userId},
+			           #{hibbsSeq},
+			           #{hibbsOrder},
+			           #{hibbsIndent},
+			           #{hibbsTitle},
+			           #{hibbsContent},
+			           0,
+			           SYSDATE,
+			           #{hibbsParent})
+	</insert>
+	<!-- 첨부파일 등록 -->
+	<insert id="boardFileInsert" parameterType = "com.sist.web.model.HiBoardFile2">
+	
+	INSERT INTO TBL_HIBOARD_FILE (
+		    HIBBS_SEQ,
+		    FILE_SEQ,
+		    FILE_ORG_NAME,
+		    FILE_NAME,
+		    FILE_EXT,
+		    FILE_SIZE,
+		    REG_DATE
+		) VALUES ( #{hibbsSeq},
+		           #{fileSeq},
+		           #{fileOrgName},
+		           #{fileName},
+		           #{fileExt},
+		           #{fileSize},
+		           SYSDATE)
+	</insert>
+		<!-- 첨부파일 -->
+	<select id="boardFileSelect" parameterType = "long" resultMap = "hiBoardFileResultMap">
+		SELECT  HIBBS_SEQ,
+	        FILE_SEQ,
+	        NVL(FILE_ORG_NAME, '')FILE_ORG_NAME,
+	        NVL(FILE_NAME, '')FILE_NAME,
+	        NVL(FILE_EXT, '')FILE_EXT,
+	        NVL(FILE_SIZE, 0)FILE_SIZE,
+	        NVL(TO_CHAR(REG_DATE, 'YYYY.MM.DD HH24:MI:SS'), '')REG_DATE
+		FROM TBL_HIBOARD_FILE
+		WHERE HIBBS_SEQ = #{value}
+		AND FILE_SEQ = 1
+	</select>
+	
+	
+<!-- 다중파일 -->
+	
+<insert id="boardFileMultiInsert" parameterType="java.util.List">
+    INSERT ALL
+    <foreach collection="list" item="file">
+        INTO TBL_HIBOARD_FILE (
+            HIBBS_SEQ,
+            FILE_SEQ,
+            FILE_ORG_NAME,
+            FILE_NAME,
+            FILE_EXT,
+            FILE_SIZE,
+            REG_DATE
+        ) VALUES (
+            #{file.hibbsSeq},
+            #{file.fileSeq},
+            #{file.fileOrgName},
+            #{file.fileName},
+            #{file.fileExt},
+            #{file.fileSize},
+            SYSDATE
+        )
+    </foreach>
+    SELECT 1 FROM DUAL
+</insert>
+
+	
+		<!-- 게시물 삭제시 답변 글 수 조회 -->
+	<select id="boardAnswersCount" parameterType = "long" resultType = "int">
+		SELECT COUNT(HIBBS_SEQ) CNT
+			FROM TBL_HIBOARD
+			WHERE HIBBS_PARENT = #{value}
+	</select>
+	
+	<!-- 게시물 삭제 -->
+	<delete id="boardDelete" parameterType = "long">
+		DELETE FROM TBL_HIBOARD
+			WHERE HIBBS_SEQ = #{value}
+	</delete>
+	
+	
+	<!-- 게시물 첨부파일 삭제 -->
+	<delete id="boardFileDelete" parameterType = "long">
+		DELETE FROM TBL_HIBOARD_FILE
+			WHERE HIBBS_SEQ = #{value}
+	</delete>
+	
+	
+
+</mapper>

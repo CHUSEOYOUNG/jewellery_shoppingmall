@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.sist.web.dao.AdminDao">
+<resultMap type="com.sist.web.model.Admin" id="adminResultMap">
+		<id column = "HIBBS_SEQ" property = "hibbsSeq" />
+        <result column = "S_ADMIN_ID" property = "adminId" />
+        <result column = "S_ADMIN_PWD" property = "adminPwd" />
+        <result column = "S_ADMIN_NAME" property = "adminName" />
+        <result column = "S_ADMIN_EMAIL" property = "adminEmail" />
+        <result column = "S_ADMIN_REGDATE" property = "adminRegdate" />
+
+	
+	</resultMap>
+    <select id="adminSelect" parameterType = "String" resultMap = "adminResultMap">
+        SELECT S_ADMIN_ID, S_ADMIN_PWD, S_ADMIN_NAME, S_ADMIN_EMAIL, 
+               TO_CHAR(S_ADMIN_REGDATE, 'YYYY.MM.DD HH24:MI:SS') AS ADMIN_REGDATE
+        FROM S_ADMIN
+        WHERE S_ADMIN_ID = #{value}
+    </select>
+
+    <insert id="adminInsert" parameterType="com.sist.web.model.Admin">
+        INSERT INTO ADMIN (S_ADMIN_ID, S_ADMIN_PWD, S_ADMIN_NAME, S_ADMIN_EMAIL, S_ADMIN_REGDATE)
+        VALUES (#{adminId}, #{adminPwd}, #{adminName}, #{adminEmail}, SYSDATE)
+    </insert>
+
+    <update id="adminUpdate" parameterType="com.sist.web.model.Admin">
+        UPDATE ADMIN
+        SET ADMIN_PWD = #{adminPwd},
+            ADMIN_NAME = #{adminName},
+            ADMIN_EMAIL = #{adminEmail}
+        WHERE ADMIN_ID = #{adminId}
+    </update>
+
+    <delete id="adminDelete" parameterType="String">
+        DELETE FROM ADMIN
+        WHERE ADMIN_ID = #{adminId}
+    </delete>
+
+</mapper>

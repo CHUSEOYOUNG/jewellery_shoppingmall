@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.sist.web.dao.MarkerDao">
+
+    <resultMap id="tourSpotResultMap" type="com.sist.web.model.TourSpot">
+        <id column="LOCATION_ID" property="locationId" />
+        <result column="LOCATION_NAME" property="locationName" />
+        <result column="ADDRESS" property="address" />
+        <result column="LATITUDE" property="latitude" />
+        <result column="LONGITUDE" property="longitude" />
+        <result column="DESCRIPTION" property="description" />
+        <result column="CATEGORY" property="category" />
+        <result column="STATUS" property="status" />  <!-- 요거 추가 -->
+    </resultMap>
+
+<select id="getAllSpots" resultMap="tourSpotResultMap">
+    SELECT 
+        LOCATION_ID,
+        LOCATION_NAME,
+        ADDRESS,
+        LATITUDE,
+        LONGITUDE,
+        DESCRIPTION,
+        CATEGORY,
+        STATUS
+    FROM LOCATION_MARKER
+</select>
+
+    <select id="searchSpotsByKeyword" resultMap="tourSpotResultMap" parameterType="String">
+        SELECT * FROM LOCATION_MARKER
+        WHERE LOWER(LOCATION_NAME) LIKE '%' || LOWER(#{keyword}) || '%'
+    </select>
+</mapper>
+
+
+
+

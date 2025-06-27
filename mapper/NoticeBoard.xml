@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sist.web.dao.NoticeBoardDao">
+    <!-- ResultMap -->
+    <resultMap id="noticeBoardResultMap" type="com.sist.web.model.NoticeBoard">
+        <id     column="NOTI_NUM"      property="notiNum" />
+        <result column="ADMIN_ID"      property="adminId" />
+        <result column="ADMIN_NAME"    property="adminName" />
+        <result column="ADMIN_EMAIL"   property="adminEmail" />
+        <result column="NOTI_TITLE"    property="notiTitle" />
+        <result column="NOTI_CONTENT"  property="notiContent" />
+        <result column="NOTI_READ_CNT" property="notiReadCnt" />
+        <result column="NOTI_REGDATE"  property="notiRegdate" />
+    </resultMap>
+
+    <!-- ✅ 게시글 리스트 -->
+    <select id="noticeList" parameterType="com.sist.web.model.NoticeBoard" resultMap="noticeBoardResultMap">
+        SELECT 
+            RNUM,
+            NOTI_NUM,
+            ADMIN_ID,
+            NOTI_TITLE,
+            NOTI_CONTENT,
+            NOTI_READ_CNT,
+            NOTI_REGDATE,
+            ADMIN_NAME,
+            ADMIN_EMAIL
+        FROM (
+            SELECT ROWNUM RNUM,
+                   NVL(NB.NOTI_NUM, 0)                           AS NOTI_NUM,
+                   NVL(NB.S_ADMIN_ID, '')                          AS ADMIN_ID,
+                   NVL(NB.NOTI_TITLE, '')                        AS NOTI_TITLE,
+                   NVL(NB.NOTI_CONTENT, '')                      AS NOTI_CONTENT,
+                   NVL(NB.NOTI_READ_CNT, 0)                      AS NOTI_READ_CNT,
+                   NVL(TO_CHAR(NB.NOTI_REGDATE, 'YYYY.MM.DD HH24:MI:SS'), '') AS NOTI_REGDATE,
+                   NVL(ADM.S_ADMIN_NAME, '')                       AS ADMIN_NAME,
+                   NVL(ADM.S_ADMIN_EMAIL, '')                      AS ADMIN_EMAIL
+            FROM S_NOTICE NB, S_ADMIN ADM
+            WHERE NB.S_ADMIN_ID = ADM.S_ADMIN_ID
+            <if test="adminName != null and adminName != ''">
+                AND ADM.ADMIN_NAME LIKE '%' || #{adminName} || '%'
+            </if>
+            <if test="notiTitle != null and notiTitle != ''">
+                AND NB.NOTI_TITLE LIKE '%' || #{notiTitle} || '%'
+            </if>
+            <if test="notiContent != null and notiContent != ''">
+                AND DBMS_LOB.INSTR(NB.NOTI_CONTENT, #{notiContent}) > 0
+            </if>
+            ORDER BY NB.NOTI_NUM DESC
+        )
+        WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <!-- ✅ 총 게시물 수 -->
+    <select id="noticeTotalCount" parameterType="com.sist.web.model.NoticeBoard" resultType="long">
+        SELECT COUNT(NB.NOTI_NUM)
+        FROM S_NOTICE NB, S_ADMIN ADM
+        WHERE NB.S_ADMIN_ID = ADM.S_ADMIN_ID
+        <if test="adminName != null and adminName != ''">
+            AND ADM.S_ADMIN_NAME LIKE '%' || #{adminName} || '%'
+        </if>
+        <if test="notiTitle != null and notiTitle != ''">
+            AND NB.NOTI_TITLE LIKE '%' || #{notiTitle} || '%'
+        </if>
+        <if test="notiContent != null and notiContent != ''">
+            AND DBMS_LOB.INSTR(NB.NOTI_CONTENT, #{notiContent}) > 0
+        </if>
+    </select>
+
+</mapper>
